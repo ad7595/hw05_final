@@ -1,0 +1,16 @@
+{% extends 'base.html'%}
+{% load thumbnail %}
+{% load cache %}
+{% block title %}Подписки на авторов Yatube{% endblock %}
+{% block header %}Подписки на авторов Yatube{% endblock %}
+{% block content %}
+  {% cache 20 index_page %}
+    {% include 'posts/includes/switcher.html' %}
+    {% for post in page_obj %} 
+      {% include 'includes/post.html' %}
+    {% endfor %} 
+  <div class="d-flex justify-content-center">
+    {% include 'includes/paginator.html' %}
+  </div>
+  {% endcache %}
+{% endblock %}
