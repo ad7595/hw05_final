@@ -32,4 +32,4 @@ class StaticURLTests(TestCase):
         for url in urls:
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, HTTPStatus.OK)

@@ -4,10 +4,10 @@
 {% block title %}Подписки на авторов Yatube{% endblock %}
 {% block header %}Подписки на авторов Yatube{% endblock %}
 {% block content %}
-  {% cache 20 index_page %}
+  {% cache 20 follow_page with page_obj %}
     {% include 'posts/includes/switcher.html' %}
     {% for post in page_obj %} 
-      {% include 'includes/post.html' %}
+      {% include 'includes/post.html' with group_link=True profile_link=True %}
     {% endfor %} 
   <div class="d-flex justify-content-center">
     {% include 'includes/paginator.html' %}

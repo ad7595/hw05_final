@@ -1,26 +1,9 @@
-from django.urls import path, register_converter
+from django.urls import path
 
-from .models import Post
 from . import views
 
 
 app_name = 'posts'
-
-
-class PostConverter:
-    regex = r'[0-9]+'
-
-    def to_python(self, value: str) -> Post:
-        try:
-            return Post.objects.get(id=value)
-        except Post.DoesNotExist:
-            raise ValueError('not exists')
-
-    def to_url(self, value: Post) -> str:
-        return str(value.id)
-
-
-register_converter(PostConverter, 'edit')
 
 
 urlpatterns = [

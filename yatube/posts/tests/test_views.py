@@ -1,8 +1,6 @@
-from http import HTTPStatus
-
 from django import forms
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.cache import cache
@@ -14,6 +12,7 @@ import shutil
 import tempfile
 
 User = get_user_model()
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class PostsPagesTests(TestCase):
@@ -136,13 +135,14 @@ class PostsPagesTests(TestCase):
         )
         self.assertEqual(response.context['post'], self.post)
         self.assertIn(self.comment, response.context['comments'])
+        self.assertIn('form', response.context)
+        self.assertEqual(len(response.context['comments']), 1)
 
     def test_post_create_show_correct_context(self):
         """Шаблон post_create с соответствующим контекстом."""
         response = self.authorized_client.get(
             reverse('posts:post_create')
         )
-        self.assertFalse(response.context['is_edit'])
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
@@ -163,7 +163,6 @@ class PostsPagesTests(TestCase):
                 kwargs={'post_id': f'{self.post.id}'}
             )
         )
-        self.assertEqual(response.context['post'], self.post)
         self.assertTrue(response.context['is_edit'])
 
         form_fields = {
@@ -177,28 +176,6 @@ class PostsPagesTests(TestCase):
                     response.context.get('form').fields.get(value)
                 )
                 self.assertIsInstance(form_field, expected)
-
-    def test_add_comment(self):
-        """Комментарий добавляется к посту."""
-        comments_count = Comment.objects.count()
-        form_data = {
-            'text': 'Тестовый комментарий',
-        }
-        response = self.authorized_client.post((
-            reverse('posts:add_comment', kwargs={'post_id': self.post.id})),
-            data=form_data,
-            follow=True
-        )
-        comment_1 = Comment.objects.get(id=self.post.id)
-        self.assertEqual(Comment.objects.count(), comments_count + 1)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertTrue(
-            Comment.objects.filter(
-                author=self.user,
-                text=form_data['text'],
-            ).exists()
-        )
-        self.assertEqual(comment_1.text, 'Тестовый комментарий')
 
     def test_new_post_with_group_checking(self):
         """При создании поста с выбором группы, пост отображается
@@ -223,23 +200,6 @@ class PostsPagesTests(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'empty-group'})
         )
         self.assertEqual(len(response.context['page_obj']), 0)
-
-    def test_add_comment_authorized(self):
-        comments_count = Comment.objects.count()
-        my_comment = 'Тестовый комментарий'
-        form_data = {
-            'text': my_comment,
-        }
-        response = self.authorized_client.post(
-            reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
-            data=form_data,
-            follow=True
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(Comment.objects.count(), comments_count + 1)
-        response = (self.authorized_client.get(reverse(
-            'posts:post_detail', kwargs={'post_id': self.post.id})))
-        self.assertEqual(response.context.get('comments')[0].text, my_comment)
 
 
 class PaginatorViewsTests(TestCase):
@@ -313,10 +273,7 @@ class PaginatorViewsTests(TestCase):
 
 User = get_user_model()
 
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
-
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class CacheTests(TestCase):
     @classmethod
     def setUpClass(cls):

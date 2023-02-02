@@ -93,19 +93,20 @@ class PostsURLTests(TestCase):
             f'/posts/{self.post.id}/': 'posts/post_detail.html',
             f'/posts/{self.post.id}/edit/': 'posts/create_post.html',
             '/create/': 'posts/create_post.html',
+            '/follow/': 'posts/follow.html'
         }
         for url, template in templates_url_names.items():
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertTemplateUsed(response, template)
 
-    def test_redirect_anonymous_if_he_try_to_follow(self):
-        """Тест определяющий факт работы редиректа при
-        подписке не авторизованного пользователя на автора."""
-        response = self.client.get(
-            f'/profile/{self.user.username}/follow/', Follow=True
-        )
-        self.assertRedirects(
-            response,
-            f'/auth/login/?next=/profile/{self.user.username}/follow/',
-        )
+    def test_follow_url_exists_at_desired_location(self):
+        """Страница доступна авторизованному пользователю."""
+        response = self.authorized_client.get('/follow/')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_profile_follow_url_redirect_anonymous_on_login(self):
+        """Проверка редиректа неавторизованного пользователя
+        со страницы подписки на страницу "войти" """
+        response = self.guest_client.get('/profile/1/follow/', follow=True)
+        self.assertRedirects(response, '/auth/login/?next=/profile/1/follow/')

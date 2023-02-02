@@ -1,11 +1,14 @@
 {% extends 'base.html' %} 
 {% block header %} 
   {{ group.title }} 
-{% endblock %} 
+{% endblock %}
+{% block title %} 
+ Записи группы {{ group.title }} 
+{% endblock %}
 {% block content %}
   <p>{{ group.description }}</p> 
   {% for post in page_obj %} 
-    {% include 'includes/post.html' with profile_link=True %}
+    {% include 'includes/post.html' with group_link=False profile_link=True %}
   {% endfor %}
   <div class="d-flex justify-content-center">
     {% include 'includes/paginator.html'%}

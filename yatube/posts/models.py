@@ -61,7 +61,7 @@ class Comment(models.Model):
         Post,
         on_delete=models.CASCADE,
         related_name='comments',
-        verbose_name='Комментарий',
+        verbose_name='Пост',
     )
     author = models.ForeignKey(
         User,
@@ -78,6 +78,11 @@ class Comment(models.Model):
         auto_now_add=True,
         db_index=True,
     )
+
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
 
     def __str__(self) -> str:
         return self.text

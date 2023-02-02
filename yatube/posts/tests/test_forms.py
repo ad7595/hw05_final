@@ -4,10 +4,16 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.conf import settings
+
 from posts.forms import PostForm
 from posts.models import Group, Post, Comment
 
+import tempfile
+
 User = get_user_model()
+
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class PostFormTests(TestCase):
@@ -25,7 +31,7 @@ class PostFormTests(TestCase):
             text='Тестовый пост',
             group=cls.group,
         )
-        cls.image = (
+        small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x01\x00'
             b'\x01\x00\x00\x00\x00\x21\xf9\x04'
             b'\x01\x0a\x00\x01\x00\x2c\x00\x00'
@@ -33,13 +39,14 @@ class PostFormTests(TestCase):
             b'\x02\x4c\x01\x00\x3b'
         )
         cls.uploaded = SimpleUploadedFile(
-            name='image.jpg',
-            content=cls.image,
+            name='small.gif',
+            content=small_gif,
             content_type='image/gif'
         )
         cls.author_client = Client()
         cls.author_client.force_login(cls.user)
         cls.form = PostForm()
+        cls.comment = 'Тестовый комментарий'
 
     def setUp(self):
         self.user = User.objects.create_user(username='TestUser')
@@ -54,8 +61,6 @@ class PostFormTests(TestCase):
         form_data = {
             'text': 'Новый текст',
             'group': self.group.id,
-            'author': self.user
-
         }
         response = self.authorized_client.post(
             reverse('posts:post_create'),
@@ -75,6 +80,36 @@ class PostFormTests(TestCase):
                 text=form_data['text'],
                 group=form_data['group'],
                 author=self.user
+            ).exists()
+        )
+
+    def test_post_create_with_image(self):
+        """При отправке валидной формы со страницы
+        создания поста с картинкой, создается запись в БД."""
+        posts_count = Post.objects.count()
+        form_data = {
+            'text': 'Новый текст',
+            'group': self.group.id,
+            'image': self.uploaded,
+        }
+        response = self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            reverse(
+                'posts:profile',
+                kwargs={'username': f'{self.user.username}'}
+            )
+        )
+        self.assertEqual(Post.objects.count(), posts_count + 1)
+        self.assertTrue(
+            Post.objects.filter(
+                text=form_data['text'],
+                group=form_data['group'],
+                author=self.user,
             ).exists()
         )
 
@@ -228,17 +263,19 @@ class PostFormTests(TestCase):
         """Аавторизованный пользователь и автор создает комментарий."""
         comments_count = Comment.objects.count()
         form_data = {
-            'text': 'Тестовый комментарий',
+            'text': self.comment,
         }
         response = self.authorized_client.post((
             reverse('posts:add_comment', kwargs={'post_id': self.post.id})),
             data=form_data,
             follow=True
         )
-        comment_1 = Comment.objects.get(id=self.post.id)
+        comment = Comment.objects.last()
         self.assertEqual(Comment.objects.count(), comments_count + 1)
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(comment_1.text, 'Тестовый комментарий')
+        self.assertEqual(comment.text, self.comment)
+        self.assertEqual(comment.post, self.post)
+        self.assertEqual(comment.author, self.user)
 
     def test_add_comments_post_anonymous(self):
         """Анонимный пользоветель создает комментарий."""
