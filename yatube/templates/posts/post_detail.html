@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block header %}
+{% block title %}
   {{ post.text|truncatechars:30 }}
 {% endblock %}
-{% block title %}
+{% block header %}
   {{ post.text|truncatechars:30 }}
 {% endblock %}
 {% block content %}
@@ -20,10 +20,8 @@
           {% endif %}
         </li>
         <li class="list-group-item">
-            Автор: {% if post.author %}{{ post.author.get_full_name }}
-          {% else %}
+            Автор: {{ post.author.get_full_name }}
             {{ post.author }}
-          {% endif %}
         <li class="list-group-item">
           <a href="{% url 'posts:profile' post.author %}">
           все посты пользователя</a>
@@ -35,7 +33,7 @@
         <img class="card-img my-2" src="{{ im.url }}">
       {% endthumbnail %}
       <p>{{ post.text }}</p>
-      {% if request_user and post.author and request_user == post.author %}
+      {% if user.get_username == post.author.username %}
       <a class="btn btn-primary" href="{% url 'posts:post_edit' post.id %}">
         редактировать запись
       </a>

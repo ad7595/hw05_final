@@ -1,7 +1,7 @@
 {% load thumbnail %}
 <article>
   <ul>
-    {% if profile_link and post.author  %}
+    {% if profile_link %}
     <li>
       Автор: {{ post.author.get_full_name }} <a href="{% url 'posts:profile' post.author %}">все посты пользователя</a>
     </li>

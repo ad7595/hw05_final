@@ -1,11 +1,12 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.cache import cache
 from django.conf import settings
 
+from posts.forms import CommentForm
 from posts.models import Group, Post, Comment, Follow
 
 import shutil
@@ -15,6 +16,7 @@ User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostsPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -135,7 +137,7 @@ class PostsPagesTests(TestCase):
         )
         self.assertEqual(response.context['post'], self.post)
         self.assertIn(self.comment, response.context['comments'])
-        self.assertIn('form', response.context)
+        self.assertIsInstance(response.context.get('form'), CommentForm)
         self.assertEqual(len(response.context['comments']), 1)
 
     def test_post_create_show_correct_context(self):
@@ -271,9 +273,6 @@ class PaginatorViewsTests(TestCase):
                 )
 
 
-User = get_user_model()
-
-
 class CacheTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -329,18 +328,16 @@ class FollowTests(TestCase):
     def test_auth_user_can_follow_author(self):
         """Тест проверяющий что авторизованный пользователь
         может подписываться на других"""
-        self.assertFalse(
-            Follow.objects.filter(
-                user=self.follower, author=self.following
-            ).exists()
-        )
+
+        follow_count = Follow.objects.count()
+
         self.authorized_follower.get(
             reverse(
                 'posts:profile_follow',
                 kwargs={'username': self.following.username},
             )
         )
-        self.assertEqual(Follow.objects.count(), 1)
+        self.assertEqual(Follow.objects.count(), follow_count + 1)
         self.assertTrue(
             Follow.objects.filter(
                 user=self.follower, author=self.following
@@ -350,6 +347,9 @@ class FollowTests(TestCase):
     def test_auth_user_can_unfollow_author(self):
         """Тест проверяющий что авторизованный пользователь
         может отписаться от автора"""
+
+        follow_count = Follow.objects.count()
+
         Follow.objects.create(user=self.follower, author=self.following)
         self.authorized_follower.get(
             reverse(
@@ -357,7 +357,7 @@ class FollowTests(TestCase):
                 kwargs={'username': self.following.username},
             )
         )
-        self.assertEqual(Follow.objects.count(), 0)
+        self.assertEqual(Follow.objects.count(), follow_count + 0)
         self.assertFalse(
             Follow.objects.filter(
                 user=self.follower, author=self.following

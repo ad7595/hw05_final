@@ -1,28 +1,30 @@
 {% extends 'base.html' %}
-{% block header %}
-  Пользователь {{ post.author.get_full_name }}
-{% endblock %}
 {% block title %}
-  Пользователь {{ post.author.get_full_name }}
+  {{ title }}
+{% endblock %}
+{% block header %}
+  Пользователь {{ author.get_full_name }}
 {% endblock %}
 {% block content %}
 {% load thumbnail %}
   <div class="mb-5">        
     <p>Всего постов: {{ author.posts.count }} </p>
-    {% if is_authenticated and user != author and following is True %}
-      <a
-        class="btn btn-lg btn-light"
-        href="{% url 'posts:profile_unfollow' author.username %}" role="button"
-      >
-        Отписаться
-      </a>
-    {% elif is_authenticated and user != author and following is False %}
-      <a
-        class="btn btn-lg btn-primary"
-        href="{% url 'posts:profile_follow' author.username %}" role="button"
-      >
-        Подписаться
-      </a>
+    {% if not author == user %}
+      {% if following %}
+        <a
+          class="btn btn-lg btn-light"
+          href="{% url 'posts:profile_unfollow' author.username %}" role="button"
+        >
+          Отписаться
+        </a>
+        {% else %}
+        <a
+          class="btn btn-lg btn-primary"
+          href="{% url 'posts:profile_follow' author.username %}" role="button"
+        >
+          Подписаться
+        </a>
+      {% endif %}
     {% endif %}
     {% for post in page_obj %}  
       {% include 'includes/post.html' with group_link=True profile_link=False %}  
