@@ -70,6 +70,11 @@ class PostsPagesTests(TestCase):
         self.not_author_client.force_login(self.user_not_author)
         cache.clear()
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
     def test_pages_uses_correct_templates(self):
         """URL-адрес использует соответствующий шаблон"""
         templates_pages_names = {
@@ -289,8 +294,8 @@ class CacheTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
         super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def test_cache_index(self):
         """Тест кэширования страницы index.html"""

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}
-  {{ title }}
+  Пользователь {{ author }}
 {% endblock %}
 {% block header %}
   Пользователь {{ author.get_full_name }}
@@ -9,7 +9,7 @@
 {% load thumbnail %}
   <div class="mb-5">        
     <p>Всего постов: {{ author.posts.count }} </p>
-    {% if not author == user %}
+    {% if author != user %}
       {% if following %}
         <a
           class="btn btn-lg btn-light"

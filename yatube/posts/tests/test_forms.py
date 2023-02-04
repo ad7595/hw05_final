@@ -10,6 +10,7 @@ from posts.forms import PostForm
 from posts.models import Group, Post, Comment
 
 import tempfile
+import shutil
 
 User = get_user_model()
 
@@ -54,6 +55,11 @@ class PostFormTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.guest_client = Client()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def test_post_create(self):
         """При отправке валидной формы со страницы

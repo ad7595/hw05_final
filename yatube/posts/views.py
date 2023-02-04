@@ -21,7 +21,7 @@ def get_pagination_queryset(request, data):
 
 
 def index(request):
-    post_list = Post.objects.all()
+    post_list = Post.objects.select_related('group', 'author')
     template = 'posts/index.html'
     page_obj = get_pagination_queryset(request, post_list)
     context = {
@@ -48,7 +48,6 @@ def profile(request, username):
     page_obj = get_pagination_queryset(request, post_list)
     template = 'posts/profile.html'
     user = request.user
-    title = f'Пользователь {author}'
     is_authenticated = user.is_authenticated
     following = is_authenticated and Follow.objects.filter(
         user=user, author=author
@@ -56,7 +55,6 @@ def profile(request, username):
     context = {
         'page_obj': page_obj,
         'author': author,
-        'title': title,
         'following': following,
     }
     return render(request, template, context)
