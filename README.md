@@ -35,6 +35,6 @@ python manage.py runserver
 ```
 Создайте superuser'a:
 ```
-docker-compose exec backend python manage.py createsuperuser
+python manage.py createsuperuser
 ```
 Проект доступен локально!
